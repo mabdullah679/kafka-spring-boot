@@ -35,8 +35,9 @@ services:
     environment:
       BOOTSTRAP_SERVERS: kafka:9092
       TOPIC_NAME: eclipse-events
-      HELLO_INTERVAL_SECONDS: 10
+      MESSAGE_INTERVAL_SECONDS: 10
       TELEMETRY_INTERVAL_SECONDS: 3
+      MAX_MESSAGE_SEQUENCE: 10
     networks:
       - eclipse-net
 

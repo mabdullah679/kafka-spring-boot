@@ -8,6 +8,19 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      missing-topics-fatal: false
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/eclipse}
+    username: ${SPRING_DATASOURCE_USERNAME:eclipse}
+    password: ${SPRING_DATASOURCE_PASSWORD:eclipse}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 app:
   topic-name: ${APP_TOPIC_NAME:eclipse-events}
+  data-sync-url: ${APP_DATA_SYNC_URL:http://data-sync:8081/sync-records}

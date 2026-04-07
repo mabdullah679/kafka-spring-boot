@@ -3,12 +3,55 @@ services:
     build:
       context: .
     container_name: spring-consumer
+    depends_on:
+      postgres:
+        condition: service_healthy
+      data-sync:
+        condition: service_healthy
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       APP_TOPIC_NAME: eclipse-events
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/eclipse
+      SPRING_DATASOURCE_USERNAME: eclipse
+      SPRING_DATASOURCE_PASSWORD: eclipse
+      APP_DATA_SYNC_URL: http://data-sync:8081/sync-records
     networks:
+      - default
       - eclipse-net
+
+  postgres:
+    image: postgres:17
+    container_name: eclipse-postgres
+    environment:
+      POSTGRES_DB: eclipse
+      POSTGRES_USER: eclipse
+      POSTGRES_PASSWORD: eclipse
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eclipse -d eclipse"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  data-sync:
+    build:
+      context: ../data-sync
+    container_name: data-sync
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://eclipse:eclipse@postgres:5432/eclipse
+      SYNC_INTERVAL_SECONDS: 300
+      PORT: 8081
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8081/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
 networks:
   eclipse-net:

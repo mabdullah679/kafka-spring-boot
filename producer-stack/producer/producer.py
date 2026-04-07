@@ -9,13 +9,14 @@ from confluent_kafka import Producer
 
 BOOTSTRAP_SERVERS = os.getenv("BOOTSTRAP_SERVERS", "kafka:9092")
 TOPIC_NAME = os.getenv("TOPIC_NAME", "eclipse-events")
-HELLO_INTERVAL_SECONDS = int(os.getenv("HELLO_INTERVAL_SECONDS", "10"))
+MESSAGE_INTERVAL_SECONDS = int(os.getenv("MESSAGE_INTERVAL_SECONDS", "10"))
 TELEMETRY_INTERVAL_SECONDS = int(os.getenv("TELEMETRY_INTERVAL_SECONDS", "3"))
+MAX_MESSAGE_SEQUENCE = int(os.getenv("MAX_MESSAGE_SEQUENCE", "10"))
 CONTAINER_NAME = socket.gethostname()
 
 
-def build_hello_message() -> str:
-    return f"Hello from {CONTAINER_NAME}."
+def build_business_message(sequence: int) -> str:
+    return f"message {sequence}"
 
 
 def build_telemetry_message(sequence: int) -> str:
@@ -40,24 +41,26 @@ def main() -> None:
 
     print(f"Producing to topic '{TOPIC_NAME}' on {BOOTSTRAP_SERVERS} from {CONTAINER_NAME}", flush=True)
 
-    sequence = 1
-    last_hello_at = 0.0
+    business_sequence = 1
+    telemetry_sequence = 1
+    last_message_at = 0.0
 
     while True:
         now = time.monotonic()
 
-        if now - last_hello_at >= HELLO_INTERVAL_SECONDS:
-            hello_message = build_hello_message()
-            producer.produce(TOPIC_NAME, key="greeting", value=hello_message)
+        if now - last_message_at >= MESSAGE_INTERVAL_SECONDS:
+            business_message = build_business_message(business_sequence)
+            producer.produce(TOPIC_NAME, key="message", value=business_message)
             producer.flush(10)
-            print(f"sent greeting: {hello_message}", flush=True)
-            last_hello_at = now
+            print(f"sent business message: {business_message}", flush=True)
+            last_message_at = now
+            business_sequence = 1 if business_sequence == MAX_MESSAGE_SEQUENCE else business_sequence + 1
 
-        telemetry_message = build_telemetry_message(sequence)
+        telemetry_message = build_telemetry_message(telemetry_sequence)
         producer.produce(TOPIC_NAME, key="telemetry", value=telemetry_message)
         producer.flush(10)
-        print(f"sent telemetry #{sequence}: {telemetry_message}", flush=True)
-        sequence += 1
+        print(f"sent telemetry #{telemetry_sequence}: {telemetry_message}", flush=True)
+        telemetry_sequence = 1 if telemetry_sequence == MAX_MESSAGE_SEQUENCE else telemetry_sequence + 1
         time.sleep(TELEMETRY_INTERVAL_SECONDS)
 
 
