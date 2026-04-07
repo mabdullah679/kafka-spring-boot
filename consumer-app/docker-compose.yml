@@ -1,0 +1,15 @@
+services:
+  spring-consumer:
+    build:
+      context: .
+    container_name: spring-consumer
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      APP_TOPIC_NAME: eclipse-events
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - eclipse-net
+
+networks:
+  eclipse-net:
+    external: true
