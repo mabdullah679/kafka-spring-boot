@@ -79,6 +79,26 @@ spring-consumer  | merged and shipped record id=4 messageNumber=4
 data-sync        | buffered merged record id=4 messageNumber=4
 ```
 
+## Publish a Message Manually
+
+With the stack running, you can publish directly to `eclipse-events` from the Kafka container:
+
+```powershell
+docker exec -it kafka /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server kafka:9092 --topic eclipse-events
+```
+
+Then type a test message and press Enter, for example:
+
+```text
+message 4
+```
+
+That should trigger the normal flow:
+
+- `spring-consumer` reads the message
+- row `id = 4` is matched in Postgres
+- `data-sync` buffers it and later flushes it to the database
+
 For a fresh test cycle, reset the database back to the original 10 rows:
 
 ```powershell
