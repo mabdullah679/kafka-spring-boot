@@ -2,7 +2,7 @@ NETWORK_NAME := eclipse-net
 PRODUCER_COMPOSE := producer-stack/docker-compose.yml
 CONSUMER_COMPOSE := consumer-app/docker-compose.yml
 
-.PHONY: help network-create network-remove build up down restart destroy ps logs logs-producer logs-consumer logs-data-sync logs-postgres
+.PHONY: help network-create network-remove build up down restart destroy ps seed-data logs logs-producer logs-consumer logs-data-sync logs-postgres
 
 help:
 	@echo "Targets:"
@@ -12,6 +12,7 @@ help:
 	@echo "  make destroy        Stop containers and remove the shared network"
 	@echo "  make restart        Recreate the full stack"
 	@echo "  make ps             Show running project containers"
+	@echo "  make seed-data      Reset eclipse_records to 10 fresh rows"
 	@echo "  make logs           Tail logs for both compose projects"
 	@echo "  make logs-producer  Tail kafka-producer logs"
 	@echo "  make logs-consumer  Tail spring-consumer logs"
@@ -43,6 +44,9 @@ restart: destroy up
 
 ps:
 	@docker ps --filter "name=kafka" --filter "name=kafka-producer" --filter "name=spring-consumer" --filter "name=data-sync" --filter "name=eclipse-postgres"
+
+seed-data:
+	@docker exec -i eclipse-postgres psql -U eclipse -d eclipse < consumer-app/db/seed.sql
 
 logs:
 	@docker compose -f $(PRODUCER_COMPOSE) logs -f &
